@@ -11,22 +11,39 @@ use Data::Dumper;
 
 my $TRUE  = \'TRUE';
 my $FALSE = \'FALSE';
+my $NIL   = [];
 
 my $ROOT_ENV = {
     '#true'  => $TRUE,
     '#false' => $FALSE,
+    '#nil'   => $NIL,
 
-    'OP:<+>' => sub ( $l, $r ) { \($l->$* + $r->$*) },
-    'OP:<->' => sub ( $l, $r ) { \($l->$* - $r->$*) },
-    'OP:<*>' => sub ( $l, $r ) { \($l->$* * $r->$*) },
-    'OP:</>' => sub ( $l, $r ) { \($l->$* / $r->$*) },
+    'OP:<+>' => sub ( $l, $r ) { [ const => \($l->[1]->$* + $r->[1]->$*) ] },
+    'OP:<->' => sub ( $l, $r ) { [ const => \($l->[1]->$* - $r->[1]->$*) ] },
+    'OP:<*>' => sub ( $l, $r ) { [ const => \($l->[1]->$* * $r->[1]->$*) ] },
+    'OP:</>' => sub ( $l, $r ) { [ const => \($l->[1]->$* / $r->[1]->$*) ] },
 
-    'OP:<==>' => sub ( $l, $r ) { ($l->$* == $r->$*) ? $TRUE : $FALSE },
-    'OP:<!=>' => sub ( $l, $r ) { ($l->$* != $r->$*) ? $TRUE : $FALSE },
-    'OP:<<>'  => sub ( $l, $r ) { ($l->$* <  $r->$*) ? $TRUE : $FALSE },
-    'OP:<<=>' => sub ( $l, $r ) { ($l->$* <= $r->$*) ? $TRUE : $FALSE },
-    'OP:<>>'  => sub ( $l, $r ) { ($l->$* >  $r->$*) ? $TRUE : $FALSE },
-    'OP:<>=>' => sub ( $l, $r ) { ($l->$* >= $r->$*) ? $TRUE : $FALSE },
+    'OP:<==>' => sub ( $l, $r ) { ($l->[1]->$* == $r->[1]->$*) ? $TRUE : $FALSE },
+    'OP:<!=>' => sub ( $l, $r ) { ($l->[1]->$* != $r->[1]->$*) ? $TRUE : $FALSE },
+    'OP:<<>'  => sub ( $l, $r ) { ($l->[1]->$* <  $r->[1]->$*) ? $TRUE : $FALSE },
+    'OP:<<=>' => sub ( $l, $r ) { ($l->[1]->$* <= $r->[1]->$*) ? $TRUE : $FALSE },
+    'OP:<>>'  => sub ( $l, $r ) { ($l->[1]->$* >  $r->[1]->$*) ? $TRUE : $FALSE },
+    'OP:<>=>' => sub ( $l, $r ) { ($l->[1]->$* >= $r->[1]->$*) ? $TRUE : $FALSE },
+
+    'OP:<head>' => sub ( $cell ) { $cell->[1] },
+    'OP:<tail>' => sub ( $cell ) { $cell->[2] },
+    
+    'OP:<list>' => sub ( @values ) {
+
+        # [ 1, 2, 3, 4 ]
+        # [ 1, [ 2, [ 3, [ 4, []]]]]
+
+        my $cell = [ cons => pop( @values ), $NIL ];
+        while ( @values ) {
+            $cell = [ cons => pop( @values ), $cell ];
+        }
+        return $cell;
+    },
 };
 
 my $KEYWORDS = {
@@ -37,6 +54,7 @@ my $KEYWORDS = {
     'apply'   => \&_apply,
     'fun'     => \&_fun,  
     'cond'    => \&_cond, 
+    'cons'    => \&_cons, 
 };
 
 sub run ( $exp ) { _eval( $exp, $ROOT_ENV ) }
@@ -53,6 +71,14 @@ sub _eval ( $exp, $env ) {
         unless exists $KEYWORDS->{ $keyword };
     
     return $KEYWORDS->{ $keyword }->( $exp, $env );
+}
+
+sub _cons ( $exp, $env ) {
+    my (undef, $head, $tail) = $exp->@*;
+
+    _DUMP( ':cons' =>  $head, $tail ) if DEBUG;
+
+    return [ cons => $head, $tail ];
 }
 
 sub _cond ( $exp, $env ) {
@@ -134,16 +160,13 @@ sub _const ( $exp, $env ) {
     die "You must have a const value and it must be a SCALAR ref : " . Dumper [ $exp, $env ]
         unless ref $value eq 'SCALAR';
 
-    return $value;
+    return [ const => $value ];
 }
 
 sub _apply ( $exp, $env ) {
     my (undef, $f, @args) = $exp->@*;
 
     _DUMP( ':apply' => $f, \@args ) if DEBUG;
-
-    return 0 if !$f;
-    return 0 if !@args; 
 
     die "Could not find function ($f) : " . Dumper [ $exp, $env ]
         if (not exists $env->{ $f }) && (not exists $env->{ 'OP:<' . $f . '>' });

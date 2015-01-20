@@ -90,7 +90,7 @@ Test::PhP::run_tests(
     },
     {
         message => '... test recursive even/odd predicate',
-        result  => [ const => \'TRUE' ],
+        result  => [ var => '#true' ],
         source  => 
         [ let_rec => [
             'is_even' =>
