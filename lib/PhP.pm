@@ -97,21 +97,21 @@ sub _let ( $exp, $env ) {
 }
 
 sub _let_rec ( $exp, $env ) {
-    my (undef, $var, $value, $body) = $exp->@*;
+    my (undef, $defs, $body) = $exp->@*;
 
-    _DUMP( ':let' => $var, $value, $body ) if DEBUG;
+    my @defs = @$defs;
 
-    # evaluate the args ...
-    my $_exp = _eval( $value, $env );
-    # stuff it in the local 
-    $env->{ $var } = $_exp;
-    # now evalute the body 
+    while ( @defs ) {
+        my ($var, $value) = (shift(@defs), shift(@defs));
+        # evaluate the args ...
+        my $_exp = _eval( $value, $env );
+        # stuff it in the local 
+        $env->{ $var } = $_exp;
+    }
+
     return _eval( 
         $body, 
-        {
-            %$env,
-            $var => $_exp
-        } 
+        { %$env } 
     )
 }
 
