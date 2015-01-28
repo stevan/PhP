@@ -9,10 +9,6 @@ use experimental 'signatures', 'postderef';
 
 sub run_tests (@tests) {
     foreach my $test ( @tests ) {
-        #warn Data::Dumper::Dumper([
-        #    PhP::run( $test->{source} ),
-        #    PhP::run( $test->{result} ),
-        #]);
         Test::More::is_deeply(
             PhP::run( $test->{source} ),
             PhP::run( $test->{result} ),

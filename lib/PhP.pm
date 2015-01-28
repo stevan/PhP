@@ -5,10 +5,6 @@ use warnings;
 
 use experimental 'signatures', 'postderef';
 
-use constant DEBUG => 0;
-
-use Data::Dumper;
-
 my $TRUE  = \'TRUE';
 my $FALSE = \'FALSE';
 my $NIL   = [];
@@ -34,14 +30,9 @@ my $ROOT_ENV = {
     'OP:<tail>' => sub ( $cell ) { $cell->[2] },
     
     'OP:<list>' => sub ( @values ) {
-
-        # [ 1, 2, 3, 4 ]
-        # [ 1, [ 2, [ 3, [ 4, []]]]]
-
         my $cell = [ cons => pop( @values ), $NIL ];
-        while ( @values ) {
-            $cell = [ cons => pop( @values ), $cell ];
-        }
+        $cell = [ cons => pop( @values ), $cell ]
+            while @values;
         return $cell;
     },
 };
@@ -59,16 +50,10 @@ my $KEYWORDS = {
 
 sub run ( $exp ) { _eval( $exp, $ROOT_ENV ) }
 
-sub _DUMP { warn Dumper \@_ }
-
 sub _eval ( $exp, $env ) {
-
-    _DUMP( 'EVAL!!!!', $exp, $env ) if DEBUG;
-
     my ($keyword) = $exp->@*;
 
-    die "Keyword $keyword not found"
-        unless exists $KEYWORDS->{ $keyword };
+    die "Keyword $keyword not found" unless exists $KEYWORDS->{ $keyword };
     
     return $KEYWORDS->{ $keyword }->( $exp, $env );
 }
@@ -76,15 +61,11 @@ sub _eval ( $exp, $env ) {
 sub _cons ( $exp, $env ) {
     my (undef, $head, $tail) = $exp->@*;
 
-    _DUMP( ':cons' =>  $head, $tail ) if DEBUG;
-
     return [ cons => $head, $tail ];
 }
 
 sub _cond ( $exp, $env ) {
     my (undef, $cond, $if_true, $if_false) = $exp->@*;
-
-    _DUMP( ':cond' =>  $cond, $if_true, $if_false ) if DEBUG;
 
     _eval( $cond, $env ) == $ROOT_ENV->{'#true'} 
         ? _eval( $if_true, $env ) 
@@ -93,8 +74,6 @@ sub _cond ( $exp, $env ) {
 
 sub _fun ( $exp, $env ) {
     my (undef, $params, $body) = $exp->@*;
-
-    _DUMP( ':fun' => $params, $body ) if DEBUG;
 
     return sub {
         my @args = @_;
@@ -111,8 +90,6 @@ sub _fun ( $exp, $env ) {
 sub _let ( $exp, $env ) {
     my (undef, $var, $value, $body) = $exp->@*;
 
-    _DUMP( ':let' => $var, $value, $body ) if DEBUG;
-
     return _eval( 
         $body, 
         {
@@ -126,39 +103,24 @@ sub _let_rec ( $exp, $env ) {
     my (undef, $defs, $body) = $exp->@*;
 
     my @defs = @$defs;
-
     while ( @defs ) {
         my ($var, $value) = (shift(@defs), shift(@defs));
-        # evaluate the args ...
         my $_exp = _eval( $value, $env );
-        # stuff it in the local 
         $env->{ $var } = $_exp;
     }
 
-    return _eval( 
-        $body, 
-        { %$env } 
-    )
+    return _eval( $body, { %$env } );
 }
 
 sub _var ( $exp, $env ) {
     my (undef, $var) = $exp->@*;
 
-    _DUMP( ':var' => $var ) if DEBUG;
-
-    die "Could not find variable $var : " . Dumper [ $exp, $env ] 
-        if not exists $env->{ $var };
-
+    die "Could not find variable $var" unless exists $env->{ $var };
     return $env->{ $var };
 }
 
 sub _const ( $exp, $env ) {
     my (undef, $value) = $exp->@*;
-
-    _DUMP( ':const' => $value ) if DEBUG;
-
-    die "You must have a const value and it must be a SCALAR ref : " . Dumper [ $exp, $env ]
-        unless ref $value eq 'SCALAR';
 
     return [ const => $value ];
 }
@@ -166,16 +128,10 @@ sub _const ( $exp, $env ) {
 sub _apply ( $exp, $env ) {
     my (undef, $f, @args) = $exp->@*;
 
-    _DUMP( ':apply' => $f, \@args ) if DEBUG;
-
-    die "Could not find function ($f) : " . Dumper [ $exp, $env ]
+    die "Could not find function ($f)"
         if (not exists $env->{ $f }) && (not exists $env->{ 'OP:<' . $f . '>' });
 
-    my $code = $env->{ $f } || $env->{ 'OP:<' . $f . '>' };
-
-    die "Could not understand the function $code : " . Dumper [ $code, $exp, $env ]
-        if ref $code ne 'CODE';
-
+    my $code        = $env->{ $f } || $env->{ 'OP:<' . $f . '>' };
     my %new_env     = $env->%*;
     my @evaled_args = map { _eval( $_, \%new_env ) } @args;
 

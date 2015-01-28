@@ -8,36 +8,13 @@ use Test::PhP;
 
 use PhP;
 
-=pod
-
-sub mul {
-    my ($x, $y) = @_;
-    return $x if $y == 1;   
-    return $x + mul( $x, $y - 1 );
-}    
-
-sub factorial {
-    my ($n) = @_;
-    return 1 if $n == 0;
-    return $n * factorial( $n - 1 );
-}
-
-sub is_even {
-    my ($n) = @_;
-    return 'TRUE' if $n == 0;
-    return is_odd( $n - 1 );
-}
-
-sub is_odd {
-    my ($n) = @_;
-    return 'FALSE' if $n == 0;
-    return is_even( $n - 1 );
-}
-
-=cut
-
 
 Test::PhP::run_tests(
+    # sub mul {
+    #    my ($x, $y) = @_;
+    #    return $x if $y == 1;   
+    #    return $x + mul( $x, $y - 1 );
+    # }    
     {
         message => '... test recursive multiply',
         result  => [ const => \25 ],
@@ -64,7 +41,12 @@ Test::PhP::run_tests(
                 [ const => \5 ], 
             ]
         ],
-    },
+    },    
+    # sub factorial {
+    #     my ($n) = @_;
+    #     return 1 if $n == 0;
+    #     return $n * factorial( $n - 1 );
+    # }
     {
         message => '... test recursive factorial',
         result  => [ const => \120 ],
@@ -88,6 +70,17 @@ Test::PhP::run_tests(
             [ apply => 'factorial', [ const => \5 ] ]
         ],
     },
+    # sub is_even {
+    #     my ($n) = @_;
+    #     return 'TRUE' if $n == 0;
+    #     return is_odd( $n - 1 );
+    # }
+    # 
+    # sub is_odd {
+    #     my ($n) = @_;
+    #     return 'FALSE' if $n == 0;
+    #     return is_even( $n - 1 );
+    # }
     {
         message => '... test recursive even/odd predicate',
         result  => [ var => '#true' ],
