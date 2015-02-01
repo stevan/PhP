@@ -102,14 +102,15 @@ sub _let ( $exp, $env ) {
 sub _let_rec ( $exp, $env ) {
     my (undef, $defs, $body) = $exp->@*;
 
+    my %env  = %$env; # make a copy first ...
     my @defs = @$defs;
     while ( @defs ) {
         my ($var, $value) = (shift(@defs), shift(@defs));
-        my $_exp = _eval( $value, $env );
-        $env->{ $var } = $_exp;
+        my $_exp = _eval( $value, \%env );
+        $env{ $var } = $_exp;
     }
 
-    return _eval( $body, { %$env } );
+    return _eval( $body, \%env );
 }
 
 sub _var ( $exp, $env ) {
