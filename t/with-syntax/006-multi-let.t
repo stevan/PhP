@@ -14,10 +14,11 @@ Test::PhP::run_tests(
         message => '... test let',
         result  => [ const => \20 ],
         source  => 
-        let('x', const(10), 
-        let('y', const(10), 
-            apply('+', var('x'), var('y'))
-        )),
+        (
+            let 'x' => (const 10), 
+            let 'y' => (const 10), 
+                (apply '+' => (var 'x'), (var 'y'))
+        ),
     },
 );
 

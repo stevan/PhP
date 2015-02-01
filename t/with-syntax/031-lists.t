@@ -7,6 +7,7 @@ use Test::More;
 use Test::PhP;
 
 use PhP;
+use PhP::Syntax;
 
 Test::PhP::run_tests(
     {
@@ -30,18 +31,18 @@ Test::PhP::run_tests(
                            ]
                        ]
                    ],
-        source  => 
-        [ let => 'x', [ apply => 'list', (map { my $x = $_; [ const => \$x ] } 0 .. 5) ],
-            [ var => 'x' ]
-        ],
+        source  => (
+            let 'x' => apply('list' => (map const($_), 0 .. 5)),
+                (var 'x')
+        ),
     },
     {
         message => '... test head on list',
         result  => [ const => \0 ],
-        source  => 
-        [ let => 'x', [ apply => 'list', (map { my $x = $_; [ const => \$x ] } 0 .. 5) ],
-            [ apply => 'head' => [ var => 'x' ] ]
-        ],
+        source  => (
+            let 'x' => apply('list' => (map const($_), 0 .. 5)),
+               apply('head' => (var 'x'))
+        ),
     },
         {
         message => '... test tail on list',
@@ -61,10 +62,10 @@ Test::PhP::run_tests(
                            ]
                        ]
                    ],
-        source  => 
-        [ let => 'x', [ apply => 'list', (map { my $x = $_; [ const => \$x ] } 0 .. 5) ],
-            [ apply => 'tail' => [ var => 'x' ] ]
-        ],
+        source  => (
+            let 'x' => apply('list' => (map const($_), 0 .. 5)),
+                apply('tail' => (var 'x'))
+        ),
     },
 );
 

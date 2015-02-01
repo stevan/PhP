@@ -87,31 +87,31 @@ Test::PhP::run_tests(
         message => '... test recursive even/odd predicate',
         result  => [ var => '#true' ],
         source  => 
-        [ let_rec => [
+        let_rec(
             'is_even' =>
-                    [ fun => [ 'n' ], 
-                        [ cond => 
-                            [ apply => '==', [ var => 'n' ], [ const => \0 ]],
-                            [ var => '#true' ],
-                            [ apply => 'is_odd',
-                                [ apply => '-', [ var => 'n' ], [ const => \1 ]]
-                            ]
-                        ]
-                    ],
+                fun('n' => 
+                    (cond
+                        apply('==' => (var 'n'), (const 0)),
+                        (var '#true'),
+                        (apply 'is_odd' =>
+                            apply( '-' => (var 'n'), (const 1))
+                        )
+                    )
+                ),
             'is_odd' =>
-                [ fun => [ 'n' ], 
-                    [ cond => 
-                        [ apply => '==', [ var => 'n' ], [ const => \0 ]],
-                        [ var => '#false' ],
-                        [ apply => 'is_even',
-                            [ apply => '-', [ var => 'n' ], [ const => \1 ]]
-                        ]
-                    ]
-                ]
-            ],
+                fun('n' =>
+                    (cond
+                        apply('==' => (var 'n'), (const 0)),
+                        (var '#false'),
+                        (apply 'is_even' =>
+                            (apply '-' => (var 'n'), (const 1))
+                        )
+                    )
+                )
+            ,
 
-            [ apply => 'is_even', [ const => \2 ] ]
-        ],
+            apply('is_even' => (const 2))
+        ),
     },
 );
 

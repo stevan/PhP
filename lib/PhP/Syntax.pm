@@ -13,6 +13,7 @@ my @EXPORTS = qw[
     apply
     fun
     cond
+    cons
 ];
 
 sub import {
@@ -51,6 +52,10 @@ sub fun ( @args ) {
 
 sub cond :prototype($$$) ($cond, $if_true, $if_false) {
     [ cond => $cond, $if_true, $if_false ]
+}
+
+sub cons :prototype($$) ($head, $tail) {
+    [ cons => $head, $tail ]
 }
 
 1;

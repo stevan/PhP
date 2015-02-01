@@ -13,7 +13,7 @@ Test::PhP::run_tests(
     {
         message => '... test const',
         result  => const(10),
-        source  => const(10),
+        source  => (const 10),
     },
 );
 
